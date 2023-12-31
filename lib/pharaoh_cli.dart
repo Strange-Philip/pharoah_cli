@@ -13,8 +13,8 @@ void main(List<String> arguments) {
   final ArgumentParser argumentsParsed = ArgumentParser(arguments);
 
   if (argumentsParsed.hasVersion) {
-    stdout.writeln('Pharoah version: ${argumentsParsed.version}');
-    // exit(1);
+    logger.info('Pharoah version: ${argumentsParsed.version}');
+    exit(1);
   }
 
   if (argumentsParsed.hasHelp) {
@@ -22,7 +22,7 @@ void main(List<String> arguments) {
     logger.info('Usage: dart Pharaoh [options]\n');
     logger.info('Global options:');
     logger.info('${argumentsParsed.usage}\n');
-    // exit(1);
+    exit(1);
   }
   if (argumentsParsed.creatingNew) {
     if (!argumentsParsed.hasProjectName) {
@@ -133,3 +133,8 @@ void buildRunner() {
     }
   });
 }
+
+final repoLink = link(
+  message: 'GitHub Repository',
+  uri: Uri.parse('https://github.com/codekeyz/yaroo-example'),
+);
