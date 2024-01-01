@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:args/args.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:watcher/watcher.dart';
 
@@ -10,33 +11,44 @@ final logger = Logger(
 void main(List<String> arguments) {
   logger.info('Welcome to Pharaoh CLI 🐎🐎🐎');
   logger.info('Pharaoh CLI is a command line tool for Pharaoh framework.');
-  final ArgumentParser argumentsParsed = ArgumentParser(arguments);
+  final ArgParser argParser = ArgParser()
+    ..addCommand(
+        'create',
+        (ArgParser createParser) {
+          createParser.addOption('projectName', abbr: 'p', help: 'Your Project name');
+        } as ArgParser?)
+    ..addFlag('help', abbr: 'h', negatable: false, help: 'Display usage information');
 
-  if (argumentsParsed.hasVersion) {
-    logger.info('Pharoah version: ${argumentsParsed.version}');
+  ArgResults argResults;
+  try {
+    argResults = argParser.parse(arguments);
+  } on ArgParserException catch (e) {
+    logger.info(e.message);
+    logger.info(argParser.usage);
     exit(1);
   }
-
-  if (argumentsParsed.hasHelp) {
+  if (argResults['help']) {
     logger.info('A command-line tool to generate an asset class.\n');
     logger.info('Usage: dart Pharaoh [options]\n');
     logger.info('Global options:');
-    logger.info('${argumentsParsed.usage}\n');
-    exit(1);
+    logger.info('''
+    -h, --help       Show this help message.
+    -v, --version    Show the version of this application.
+  ''');
+    exit(0);
   }
-  if (argumentsParsed.creatingNew) {
-    if (!argumentsParsed.hasProjectName) {
-      logger.err('Please provide a project name.');
-      final projName = logger.prompt(
-        'What is the name of your project?',
-        defaultValue: 'new_project',
-      );
-      return createPharaohProject(projName);
-    } else {
-      createPharaohProject(argumentsParsed.projectName);
-    }
+
+  final String command = argResults.command?.name ?? '';
+
+  switch (command) {
+    case 'create':
+      createProject(argResults);
+      break;
+    default:
+      logger.info('Invalid command. Use "create" command.');
+      logger.info(argParser.usage);
+      exit(1);
   }
-  argumentsParsed.parse();
 
   // Watch for file changes in the 'lib' directory
   final watcher = DirectoryWatcher('lib');
@@ -51,74 +63,18 @@ void main(List<String> arguments) {
   });
 }
 
-class ArgumentParser {
-  final List<String> args;
-  ArgumentParser(this.args);
+void createProject(ArgResults argResults) {
+  final String projectName = argResults['projectName'];
 
-  // parse function
-  void parse() {
-    // check for invalid arguments and unknown flags
-    invalidArgument();
-    return;
+  if (projectName.isEmpty) {
+    logger.err('Please provide a project name.');
+    final projName = logger.prompt(
+      'What is the name of your project?',
+      defaultValue: 'new_project',
+    );
+    return fetchGitHubProject(projName);
   }
-
-  bool get hasArguments => args.isNotEmpty;
-  bool get hasVersion => args.contains('-v') || args.contains('--version');
-  bool get hasHelp => args.contains('-h') || args.contains('--help');
-  bool get creatingNew => hasArguments && args.first == "new";
-  bool get hasProjectName => args[1].isNotEmpty;
-  String get projectName => args[1];
-
-  String version = '0.0.1';
-
-  String usage = '''
-    -h, --help       Show this help message.
-    -v, --version    Show the version of this application.
-  ''';
-
-  void invalidArgument() {
-    Map<String, String> flags = {};
-    for (var i = 0; i < args.length; i += 2) {
-      if (args[i].startsWith('-')) {
-        if ([
-          '-v',
-          '--version',
-          '-h',
-          '--help',
-        ].contains(args[i])) {
-          if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
-            flags[args[i]] = args[i + 1];
-          } else {
-            throw Exception('''Expected a value after ${args[i]}
-                Run `Pharoah --help` for more information.
-                ''');
-          }
-        } else {
-          throw Exception('''Unknown flag ${args[i]}
-              Run `Pharoah --help` for more information.
-              ''');
-        }
-      } else {
-        throw Exception('''Invalid argument ${args[i]}
-            Run `Pharoah --help` for more information.
-            ''');
-      }
-    }
-  }
-}
-
-void createPharaohProject(String projectName) {
-  final progress = logger.progress('Creating $projectName Pharaoh project ...');
-  progress.update('Creating $projectName Pharoah project ...');
-  Process.run('dart', ['create', '-t', 'console', projectName]).then((ProcessResult results) {
-    if (results.exitCode == 0) {
-      progress.update(results.stdout);
-      progress
-          .complete('✅Pharoah project "$projectName" created successfully.\nHappy Coding 🐎🐎🐎');
-    } else {
-      progress.fail('❌Error creating Pharoah project. Please check the dart installation.');
-    }
-  });
+  fetchGitHubProject(projectName);
 }
 
 void buildRunner() {
@@ -130,6 +86,27 @@ void buildRunner() {
       progress.complete('✅Successfully updated generated files...');
     } else {
       progress.fail('❌Error updating generated files...');
+    }
+  });
+}
+
+void fetchGitHubProject(String projectName) {
+  final progress = logger.progress('Cloning template from github ...');
+  // Check if git is installed
+  String githubLink = "https://github.com/codekeyz/yaroo-example";
+  ProcessResult result = Process.runSync('git', ['--version']);
+  if (result.exitCode != 0) {
+    progress.fail('❌Error: Git is not installed. Please install Git..');
+    exit(1);
+  }
+
+  // Clone the GitHub project
+  Process.run('git', ['clone', githubLink, projectName]).then((ProcessResult results) {
+    if (result.exitCode == 0) {
+      progress
+          .complete('✅Pharoah project "$projectName" created successfully.\nHappy Coding 🐎🐎🐎');
+    } else {
+      progress.fail('❌Error cloning GitHub project. Please check the GitHub link and try again...');
     }
   });
 }
