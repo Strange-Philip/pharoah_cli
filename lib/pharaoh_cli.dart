@@ -9,8 +9,8 @@ final logger = Logger(
 );
 
 void main(List<String> arguments) {
-  logger.info('Welcome to Pharaoh CLI 🐎🐎🐎');
-  logger.info('Pharaoh CLI is a command line tool for Pharaoh framework.');
+  logger.info('Welcome to Yaroo CLI 🐎🐎🐎');
+  logger.info('Yaroo CLI is a command line tool for Pharaoh framework.');
   logger.info('Mind giving us a star on $repoLink? It helps us out a lot.\n');
   final ArgParser argParser = ArgParser()
     ..addCommand('create')
@@ -106,8 +106,7 @@ void fetchGitHubProject(String projectName) {
   // Clone the GitHub project
   Process.run('git', ['clone', githubLink, projectName]).then((ProcessResult results) {
     if (result.exitCode == 0) {
-      progress
-          .complete('✅Pharoah project "$projectName" created successfully.\nHappy Coding 🐎🐎🐎');
+      progress.complete('✅Yaroo project "$projectName" created successfully.\nHappy Coding 🐎🐎🐎');
     } else {
       progress.fail('❌Error cloning GitHub project. Please check the GitHub link and try again...');
     }
