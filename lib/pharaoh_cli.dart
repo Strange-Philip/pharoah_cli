@@ -11,12 +11,15 @@ final logger = Logger(
 void main(List<String> arguments) {
   logger.info('Welcome to Pharaoh CLI 🐎🐎🐎');
   logger.info('Pharaoh CLI is a command line tool for Pharaoh framework.');
+  logger.info('Mind giving us a star on $repoLink? It helps us out a lot.\n');
   final ArgParser argParser = ArgParser()
-    ..addCommand(
-        'create',
-        (ArgParser createParser) {
-          createParser.addOption('projectName', abbr: 'p', help: 'Your Project name');
-        } as ArgParser?)
+    ..addCommand('create')
+    ..addOption(
+      'projectName',
+      abbr: 'p',
+      help: 'Your project name',
+    )
+    ..addFlag('version', abbr: 'v', negatable: false, help: 'Display the current version')
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Display usage information');
 
   ArgResults argResults;
@@ -64,9 +67,9 @@ void main(List<String> arguments) {
 }
 
 void createProject(ArgResults argResults) {
-  final String projectName = argResults['projectName'];
+  final String? projectName = argResults['projectName'];
 
-  if (projectName.isEmpty) {
+  if (projectName == null || projectName.isEmpty) {
     logger.err('Please provide a project name.');
     final projName = logger.prompt(
       'What is the name of your project?',
